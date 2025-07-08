@@ -2,21 +2,22 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const serverless = require("serverless-http"); // 👈 עטיפה ל־Vercel
 
 // יצירת אפליקציית Express
 const app = express();
 
-// הגדרת מקורות מורשים לגישת CORS
+// מקורות מורשים
 const allowedOrigins = [
   'https://physical-eitan.vercel.app', // פרונט Production
   'https://physical-eitan-o3qw.vercel.app', // Preview של Vercel
   'http://localhost:3000' // פיתוח מקומי
 ];
 
-// קונפיגורציית CORS כללית
+// הגדרת CORS
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // מאפשר קריאות ללא origin (כמו Postman)
+    if (!origin) return callback(null, true);
     if (
       allowedOrigins.includes(origin) ||
       origin.endsWith('.app.github.dev')
@@ -32,13 +33,8 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"]
 };
 
-// שימוש ב־CORS
 app.use(cors(corsOptions));
-
-// טיפול ייעודי בבקשות Preflight
 app.options("*", cors(corsOptions));
-
-// תומך ב־JSON בגוף הבקשה
 app.use(express.json());
 
 // התחברות ל־MongoDB
@@ -57,8 +53,6 @@ app.use("/api/users", userRoutes);
 const subjectRoutes = require("./routes/subjectRoutes");
 app.use("/api/subjects", subjectRoutes);
 
-// ✅ עטיפת האפליקציה כ־Serverless Function עבור Vercel
-const server = app;
-module.exports = (req, res) => {
-  server(req, res);
-};
+// ייצוא מתאים ל־Vercel Serverless
+module.exports = app;
+module.exports.handler = serverless(app);
