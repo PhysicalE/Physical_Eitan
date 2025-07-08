@@ -13,7 +13,7 @@
 //   'http://localhost:3000',
 //   'https://server-theta-weld.vercel.app'
 // ];
-equire("dotenv").config();
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
