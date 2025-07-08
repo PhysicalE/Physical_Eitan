@@ -14,6 +14,7 @@ const allowedOrigins = [
   'http://localhost:3000' // פיתוח מקומי
 ];
 
+
 // הגדרת CORS
 const corsOptions = {
   origin: function (origin, callback) {
