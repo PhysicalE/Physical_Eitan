@@ -11,7 +11,8 @@ const app = express();
 const allowedOrigins = [
   'https://physical-eitan.vercel.app', // פרונט Production
   'https://physical-eitan-o3qw.vercel.app', // Preview של Vercel
-  'http://localhost:3000' // פיתוח מקומי
+  'http://localhost:3000', // פיתוח מקומי
+  'https://server-l0bb5psry-physicales-projects.vercel.app'
 ];
 
 
