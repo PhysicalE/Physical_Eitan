@@ -30,6 +30,7 @@ export default function LoginForm() {
       const response = await fetch(`${BASE_URL}/api/users/signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
       console.log("LoginForm: Signin API response status:", response.status);
