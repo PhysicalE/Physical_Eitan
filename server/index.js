@@ -9,16 +9,15 @@ const app = express();
 
 // מקורות מורשים
 const allowedOrigins = [
-  'https://physical-eitan.vercel.app', // פרונט Production
-  'https://physical-eitan-o3qw.vercel.app', // Preview של Vercel
-  'http://localhost:3000', // פיתוח מקומי
+  'https://physical-eitan.vercel.app',
+  'https://physical-eitan-o3qw.vercel.app',
+  'http://localhost:3000',
   'https://server-l0bb5psry-physicales-projects.vercel.app'
 ];
 
-// הגדרת CORS - גרסה מתוקנת
+// הגדרת CORS
 const corsOptions = {
   origin: function (origin, callback) {
-    // אפשר requests ללא origin (כמו Postman או mobile apps)
     if (!origin) return callback(null, true);
     
     if (
@@ -36,10 +35,9 @@ const corsOptions = {
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  optionsSuccessStatus: 200 // תמיכה בדפדפנים ישנים
+  optionsSuccessStatus: 200
 };
 
-// הגדרת CORS - סדר חשוב!
 app.use(cors(corsOptions));
 
 // טיפול מפורש ב-preflight requests
@@ -51,7 +49,7 @@ app.options("*", (req, res) => {
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
     res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Max-Age', '86400'); // 24 hours
+    res.header('Access-Control-Max-Age', '86400');
     
     console.log("✅ OPTIONS preflight handled for:", origin);
     return res.status(200).end();
@@ -61,7 +59,6 @@ app.options("*", (req, res) => {
   return res.status(403).end();
 });
 
-// Middleware נוספים
 app.use(express.json());
 
 // הוספת headers לכל response
@@ -76,28 +73,65 @@ app.use((req, res, next) => {
   next();
 });
 
-// התחברות ל־MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((error) => console.error("❌ MongoDB Connection Error:", error));
+// ❌ הסרת חיבור MongoDB מכאן - נעביר לכל route בנפרד
+// mongoose.connect() כאן גורם לטיימאוט!
 
-// נתיבי API
-const questionRoutes = require("./routes/questionRoutes");
-app.use("/api/questions", questionRoutes);
-
-const userRoutes = require("./routes/userRoutes");
-app.use("/api/users", userRoutes);
-
-const subjectRoutes = require("./routes/subjectRoutes");
-app.use("/api/subjects", subjectRoutes);
-
-// נתיב בדיקת בריאות
+// נתיב בדיקת בריאות - ללא MongoDB
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    origin: req.headers.origin 
+    origin: req.headers.origin,
+    message: 'Server is running without MongoDB connection'
+  });
+});
+
+// פונקציה לחיבור MongoDB עם טיימאוט
+async function connectToMongoDB() {
+  if (mongoose.connection.readyState === 1) {
+    return; // כבר מחובר
+  }
+  
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000, // 5 שניות במקום 300
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+      bufferMaxEntries: 0
+    });
+    console.log("✅ Connected to MongoDB");
+  } catch (error) {
+    console.error("❌ MongoDB Connection Error:", error);
+    throw error;
+  }
+}
+
+// Middleware לחיבור MongoDB רק לנתיבי API שצריכים אותו
+const requireMongoDB = async (req, res, next) => {
+  try {
+    await connectToMongoDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+};
+
+// נתיבי API עם חיבור MongoDB
+const questionRoutes = require("./routes/questionRoutes");
+app.use("/api/questions", requireMongoDB, questionRoutes);
+
+const userRoutes = require("./routes/userRoutes");
+app.use("/api/users", requireMongoDB, userRoutes);
+
+const subjectRoutes = require("./routes/subjectRoutes");
+app.use("/api/subjects", requireMongoDB, subjectRoutes);
+
+// נתיב ברירת מחדל
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Physics School API Server',
+    status: 'running',
+    endpoints: ['/api/health', '/api/users', '/api/questions', '/api/subjects']
   });
 });
 
