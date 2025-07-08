@@ -3,39 +3,44 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-// יצירת אפליקציה של Express
+// יצירת אפליקציית Express
 const app = express();
 
 // הגדרת מקורות מורשים לגישת CORS
 const allowedOrigins = [
-  'https://physical-eitan.vercel.app', // פרונט בפרודקשן
+  'https://physical-eitan.vercel.app', // פרונט Production
   'http://localhost:3000'              // פיתוח מקומי
 ];
 
-// קונפיגורציית CORS
-app.use(cors({
+// קונפיגורציית CORS כללית
+const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // מאפשר לקוחות ללא origin (כמו Postman)
+    if (!origin) return callback(null, true); // מאפשר קריאות ללא origin (כמו Postman)
     if (
       allowedOrigins.includes(origin) ||
       origin.endsWith('.app.github.dev')
     ) {
       console.log("✅ CORS allowed for:", origin);
-      callback(null, true);
-    } else {
-      console.log("❌ CORS blocked for:", origin);
-      callback(new Error('Not allowed by CORS: ' + origin));
+      return callback(null, true);
     }
+    console.log("❌ CORS blocked for:", origin);
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
-}));
+};
 
-// תומך ב-JSON בבקשות
+// שימוש ב־CORS
+app.use(cors(corsOptions));
+
+// טיפול ייעודי בבקשות Preflight
+app.options("*", cors(corsOptions));
+
+// תומך ב־JSON בגוף הבקשה
 app.use(express.json());
 
-// התחברות למסד הנתונים
+// התחברות ל־MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
@@ -51,5 +56,5 @@ app.use("/api/users", userRoutes);
 const subjectRoutes = require("./routes/subjectRoutes");
 app.use("/api/subjects", subjectRoutes);
 
-// ייצוא האפליקציה ל־Vercel
+// ייצוא ל־Vercel Serverless
 module.exports = app;
