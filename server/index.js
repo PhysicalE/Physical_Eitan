@@ -9,6 +9,7 @@ const app = express();
 // הגדרת מקורות מורשים לגישת CORS
 const allowedOrigins = [
   'https://physical-eitan.vercel.app', // פרונט Production
+  'https://physical-eitan-o3qw.vercel.app',     // preview/deployment
   'http://localhost:3000'              // פיתוח מקומי
 ];
 
