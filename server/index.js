@@ -22,8 +22,10 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     if (
       allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
       origin.endsWith('.app.github.dev')
-    ) {
+    )
+ {
       console.log("✅ CORS allowed for:", origin);
       return callback(null, true);
     }
