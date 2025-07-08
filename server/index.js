@@ -54,5 +54,4 @@ const subjectRoutes = require("./routes/subjectRoutes");
 app.use("/api/subjects", subjectRoutes);
 
 // ייצוא מתאים ל־Vercel Serverless
-module.exports = app;
 module.exports.handler = serverless(app);
