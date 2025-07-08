@@ -9,8 +9,8 @@ const app = express();
 // הגדרת מקורות מורשים לגישת CORS
 const allowedOrigins = [
   'https://physical-eitan.vercel.app', // פרונט Production
-  'https://physical-eitan-o3qw.vercel.app',     // preview/deployment
-  'http://localhost:3000'              // פיתוח מקומי
+  'https://physical-eitan-o3qw.vercel.app', // Preview של Vercel
+  'http://localhost:3000' // פיתוח מקומי
 ];
 
 // קונפיגורציית CORS כללית
@@ -57,5 +57,8 @@ app.use("/api/users", userRoutes);
 const subjectRoutes = require("./routes/subjectRoutes");
 app.use("/api/subjects", subjectRoutes);
 
-// ייצוא ל־Vercel Serverless
-module.exports = app;
+// ✅ עטיפת האפליקציה כ־Serverless Function עבור Vercel
+const server = app;
+module.exports = (req, res) => {
+  server(req, res);
+};
